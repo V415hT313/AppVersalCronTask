@@ -2,10 +2,10 @@ package server
 
 import (
     "context"
+    "net"
     "sync"
-
-    "github.com/V415hT313/AppVersalCronTask/internal/logger"
     "github.com/V415hT313/AppVersalCronTask/proto"
+    "go.uber.org/zap"
     "google.golang.org/grpc"
 )
 
@@ -21,7 +21,7 @@ func (s *ReportServer) GenerateReport(ctx context.Context, req *proto.ReportRequ
 
     reportID := "report-" + req.UserId
     s.reports[reportID] = "Report for " + req.UserId
-    logger.Log.Info("Generated report", zap.String("report_id", reportID), zap.String("user_id", req.UserId))
+    zap.L().Info("Generated report", zap.String("report_id", reportID), zap.String("user_id", req.UserId))
 
     return &proto.ReportResponse{ReportId: reportID}, nil
 }
@@ -33,12 +33,12 @@ func (s *ReportServer) HealthCheck(ctx context.Context, req *proto.HealthCheckRe
 func StartGRPCServer() {
     lis, err := net.Listen("tcp", ":50051")
     if err != nil {
-        logger.Log.Fatal("Failed to listen", zap.Error(err))
+        zap.L().Fatal("Failed to listen", zap.Error(err))
     }
     s := grpc.NewServer()
     proto.RegisterReportServiceServer(s, &ReportServer{reports: make(map[string]string)})
-    logger.Log.Info("Server listening", zap.String("address", lis.Addr().String()))
+    zap.L().Info("Server listening", zap.String("address", lis.Addr().String()))
     if err := s.Serve(lis); err != nil {
-        logger.Log.Fatal("Failed to serve", zap.Error(err))
+        zap.L().Fatal("Failed to serve", zap.Error(err))
     }
 }
