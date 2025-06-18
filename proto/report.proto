@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package report;
+
+option go_package = "github.com/V415hT313/AppVersalCronTask/proto";
+
+service ReportService {
+    rpc GenerateReport (ReportRequest) returns (ReportResponse);
+    rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message ReportRequest {
+    string user_id = 1;
+}
+
+message ReportResponse {
+    string report_id = 1;
+    string error = 2;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+    string status = 1;
+}
