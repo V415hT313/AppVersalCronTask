@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
 	"github.com/V415hT313/AppVersalCronTask/internal/cron"
 	"github.com/V415hT313/AppVersalCronTask/internal/logger"
 	"github.com/V415hT313/AppVersalCronTask/internal/server"
@@ -9,6 +12,8 @@ import (
 
 func main() {
 	logger.Init()
+	defer logger.CloseLogger() 
+
 	zap.L().Info("Starting the application...")
 
 	go func() {
@@ -21,6 +26,9 @@ func main() {
 		cron.StartCronJob()
 	}()
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 	zap.L().Info("Application is running. Press CTRL+C to exit.")
-	select {}
+	
 }
