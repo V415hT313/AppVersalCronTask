@@ -1,33 +1,37 @@
 package server
 
 import (
-    "context"
-    "net"
-    "sync"
-    "github.com/V415hT313/AppVersalCronTask/proto"
-    "go.uber.org/zap"
-    "google.golang.org/grpc"
+	"context"
+	"net"
+	"sync"
+
+	"github.com/V415hT313/AppVersalCronTask/proto"
+	"google.golang.org/grpc/reflection"
+
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 type ReportServer struct {
-    proto.UnimplementedReportServiceServer
-    reports map[string]string
-    mu      sync.Mutex
+	proto.UnimplementedReportServiceServer
+	reports map[string]string
+	mu      sync.Mutex
 }
 
 func (s *ReportServer) GenerateReport(ctx context.Context, req *proto.ReportRequest) (*proto.ReportResponse, error) {
-    s.mu.Lock()
-    defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-    reportID := "report-" + req.UserId
-    s.reports[reportID] = "Report for " + req.UserId
-    zap.L().Info("Generated report", zap.String("report_id", reportID), zap.String("user_id", req.UserId))
+	reportID := "report-" + req.UserId
+	s.reports[reportID] = "Report for " + req.UserId
+	zap.L().Info("Generated report", zap.String("report_id", reportID), zap.String("user_id", req.UserId))
 
-    return &proto.ReportResponse{ReportId: reportID}, nil
+	return &proto.ReportResponse{ReportId: reportID}, nil
 }
 
 func (s *ReportServer) HealthCheck(ctx context.Context, req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
-    return &proto.HealthCheckResponse{Status: "OK"}, nil
+	zap.L().Info("Health check requested")
+	return &proto.HealthCheckResponse{Status: "OK"}, nil
 }
 
 func StartGRPCServer() {
@@ -37,6 +41,10 @@ func StartGRPCServer() {
     }
     s := grpc.NewServer()
     proto.RegisterReportServiceServer(s, &ReportServer{reports: make(map[string]string)})
+
+    // Register reflection service on gRPC server.
+    reflection.Register(s)
+
     zap.L().Info("Server listening", zap.String("address", lis.Addr().String()))
     if err := s.Serve(lis); err != nil {
         zap.L().Fatal("Failed to serve", zap.Error(err))
